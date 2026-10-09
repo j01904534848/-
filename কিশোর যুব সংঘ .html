@@ -1,0 +1,283 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>কিশোর যুব সংঘ - ম্যানেজমেন্ট প্যানেল</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- App Container -->
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-blue-600 text-white shadow-md p-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold">কিশোর যুব সংঘ (অ্যাডমিন প্যানেল)</h1>
+            <button id="logoutBtn" class="bg-red-500 px-3 py-1 rounded text-sm hidden hover:bg-red-600">লগআউট</button>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 p-4 max-w-6xl mx-auto w-full">
+            <!-- Login Section -->
+            <section id="loginSection" class="bg-white p-6 rounded-lg shadow-md max-w-md mx-auto mt-10">
+                <h2 class="text-2xl font-bold mb-4 text-center text-gray-800">অ্যাডমিন লগইন</h2>
+                <form id="loginForm" class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700">ইমেইল</label>
+                        <input type="email" id="email" required class="w-full border p-2 rounded mt-1 focus:ring focus:ring-blue-300">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700">পাসওয়ার্ড</label>
+                        <input type="password" id="password" required class="w-full border p-2 rounded mt-1 focus:ring focus:ring-blue-300">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded font-bold hover:bg-blue-700">লগইন করুন</button>
+                </form>
+            </section>
+
+            <!-- Dashboard Section (Hidden by default) -->
+            <div id="dashboardSection" class="hidden space-y-6">
+                <!-- Navigation Tabs -->
+                <div class="flex space-x-2 border-b pb-2">
+                    <button onclick="switchTab('members')" id="tabMembers" class="px-4 py-2 bg-blue-600 text-white rounded font-medium">সদস্যগণ</button>
+                    <button onclick="switchTab('payments')" id="tabPayments" class="px-4 py-2 bg-gray-200 text-gray-700 rounded font-medium">চাঁদা (Payments)</button>
+                    <button onclick="switchTab('expenses')" id="tabExpenses" class="px-4 py-2 bg-gray-200 text-gray-700 rounded font-medium">খরচ (Expenses)</button>
+                </div>
+
+                <!-- Members Tab Content -->
+                <div id="contentMembers" class="space-y-4">
+                    <div class="bg-white p-4 rounded shadow">
+                        <h3 class="text-lg font-bold mb-3 text-gray-800">নতুন সদস্য যোগ করুন</h3>
+                        <form id="addMemberForm" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <input type="text" id="memberName" placeholder="সদস্যের নাম" required class="border p-2 rounded">
+                            <input type="text" id="memberPhone" placeholder="মোবাইল নম্বর" class="border p-2 rounded">
+                            <input type="text" id="memberAddress" placeholder="ঠিকানা" class="border p-2 rounded">
+                            <button type="submit" class="md:col-span-3 bg-green-600 text-white p-2 rounded font-bold hover:bg-green-700">সদস্য সংরক্ষণ করুন</button>
+                        </form>
+                    </div>
+                    <div class="bg-white p-4 rounded shadow">
+                        <h3 class="text-lg font-bold mb-3 text-gray-800">সদস্য তালিকা</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-200">
+                                        <th class="p-2 border">নাম</th>
+                                        <th class="p-2 border">ফোন</th>
+                                        <th class="p-2 border">ঠিকানা</th>
+                                        <th class="p-2 border">স্ট্যাটাস</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="membersTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payments Tab Content -->
+                <div id="contentPayments" class="hidden space-y-4">
+                    <div class="bg-white p-4 rounded shadow">
+                        <h3 class="text-lg font-bold mb-3 text-gray-800">চাঁদা এন্ট্রি করুন</h3>
+                        <form id="addPaymentForm" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <select id="paymentMemberId" required class="border p-2 rounded">
+                                <option value="">সদস্য নির্বাচন করুন</option>
+                            </select>
+                            <input type="number" id="paymentAmount" placeholder="টাকার পরিমাণ" required class="border p-2 rounded">
+                            <input type="date" id="paymentDate" required class="border p-2 rounded">
+                            <button type="submit" class="md:col-span-3 bg-green-600 text-white p-2 rounded font-bold hover:bg-green-700">চাঁদা জমা দিন</button>
+                        </form>
+                    </div>
+                    <div class="bg-white p-4 rounded shadow">
+                        <h3 class="text-lg font-bold mb-3 text-gray-800">চাঁদার ইতিহাস</h3>
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-200">
+                                    <th class="p-2 border">তারিখ</th>
+                                    <th class="p-2 border">সদস্য আইডি</th>
+                                    <th class="p-2 border">পরিমাণ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Expenses Tab Content -->
+                <div id="contentExpenses" class="hidden space-y-4">
+                    <div class="bg-white p-4 rounded shadow">
+                        <h3 class="text-lg font-bold mb-3 text-gray-800">খরচ এন্ট্রি করুন</h3>
+                        <form id="addExpenseForm" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <input type="text" id="expenseDesc" placeholder="খরচের বিবরণ" required class="border p-2 rounded">
+                            <input type="number" id="expenseAmount" placeholder="টাকার পরিমাণ" required class="border p-2 rounded">
+                            <input type="date" id="expenseDate" required class="border p-2 rounded">
+                            <button type="submit" class="md:col-span-3 bg-red-600 text-white p-2 rounded font-bold hover:bg-red-700">খরচ সংরক্ষণ করুন</button>
+                        </form>
+                    </div>
+                    <div class="bg-white p-4 rounded shadow">
+                        <h3 class="text-lg font-bold mb-3 text-gray-800">খরচের তালিকা</h3>
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-200">
+                                    <th class="p-2 border">তারিখ</th>
+                                    <th class="p-2 border">বিবরণ</th>
+                                    <th class="p-2 border">পরিমাণ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expensesTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // আপনার Supabase কনফিগারেশন সেটআপ সম্পন্ন
+        const SUPABASE_URL = 'https://lycpzpemvjnqkagnirw.supabase.co';
+        const SUPABASE_ANON_KEY = 'Sb_publishable_izGGMxrwqAnMT_cPyAe29A_4JWxk9jI';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const loginSection = document.getElementById('loginSection');
+        const dashboardSection = document.getElementById('dashboardSection');
+        const loginForm = document.getElementById('loginForm');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        async function checkUser() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                loginSection.classList.add('hidden');
+                dashboardSection.classList.remove('hidden');
+                logoutBtn.classList.remove('hidden');
+                loadData();
+            } else {
+                loginSection.classList.remove('hidden');
+                dashboardSection.classList.add('hidden');
+                logoutBtn.classList.add('hidden');
+            }
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) {
+                alert('লগইন ব্যর্থ হয়েছে: ' + error.message);
+            } else {
+                checkUser();
+            }
+        });
+
+        logoutBtn.addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            checkUser();
+        });
+
+        function switchTab(tab) {
+            document.getElementById('contentMembers').classList.add('hidden');
+            document.getElementById('contentPayments').classList.add('hidden');
+            document.getElementById('contentExpenses').classList.add('hidden');
+            document.getElementById('tabMembers').className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded font-medium';
+            document.getElementById('tabPayments').className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded font-medium';
+            document.getElementById('tabExpenses').className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded font-medium';
+
+            if (tab === 'members') {
+                document.getElementById('contentMembers').classList.remove('hidden');
+                document.getElementById('tabMembers').className = 'px-4 py-2 bg-blue-600 text-white rounded font-medium';
+            } else if (tab === 'payments') {
+                document.getElementById('contentPayments').classList.remove('hidden');
+                document.getElementById('tabPayments').className = 'px-4 py-2 bg-blue-600 text-white rounded font-medium';
+            } else if (tab === 'expenses') {
+                document.getElementById('contentExpenses').classList.remove('hidden');
+                document.getElementById('tabExpenses').className = 'px-4 py-2 bg-blue-600 text-white rounded font-medium';
+            }
+        }
+
+        async function loadData() {
+            // Load Members
+            const { data: members } = await supabaseClient.from('members').select('*');
+            const memberTable = document.getElementById('membersTableBody');
+            const paymentMemberSelect = document.getElementById('paymentMemberId');
+            memberTable.innerHTML = '';
+            paymentMemberSelect.innerHTML = '<option value="">সদস্য নির্বাচন করুন</option>';
+
+            if (members) {
+                members.forEach(m => {
+                    memberTable.innerHTML += `<tr class="border-b"><td class="p-2 border">${m.name}</td><td class="p-2 border">${m.phone || ''}</td><td class="p-2 border">${m.address || ''}</td><td class="p-2 border">${m.status || 'Active'}</td></tr>`;
+                    paymentMemberSelect.innerHTML += `<option value="${m.member_id || m.id}">${m.name}</option>`;
+                });
+            }
+
+            // Load Payments
+            const { data: payments } = await supabaseClient.from('payments').select('*');
+            const paymentTable = document.getElementById('paymentsTableBody');
+            paymentTable.innerHTML = '';
+            if (payments) {
+                payments.forEach(p => {
+                    paymentTable.innerHTML += `<tr class="border-b"><td class="p-2 border">${p.payment_date || p.created_at}</td><td class="p-2 border">${p.member_id}</td><td class="p-2 border">৳${p.amount}</td></tr>`;
+                });
+            }
+
+            // Load Expenses
+            const { data: expenses } = await supabaseClient.from('expenses').select('*');
+            const expenseTable = document.getElementById('expensesTableBody');
+            expenseTable.innerHTML = '';
+            if (expenses) {
+                expenses.forEach(ex => {
+                    expenseTable.innerHTML += `<tr class="border-b"><td class="p-2 border">${ex.expense_date || ex.created_at}</td><td class="p-2 border">${ex.description}</td><td class="p-2 border">৳${ex.amount}</td></tr>`;
+                });
+            }
+        }
+
+        // Add Member
+        document.getElementById('addMemberForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('memberName').value;
+            const phone = document.getElementById('memberPhone').value;
+            const address = document.getElementById('memberAddress').value;
+
+            const { error } = await supabaseClient.from('members').insert([{ name, phone, address }]);
+            if (error) alert('ত্রুটি: ' + error.message);
+            else {
+                alert('সদস্য সফলভাবে যোগ হয়েছে!');
+                document.getElementById('addMemberForm').reset();
+                loadData();
+            }
+        });
+
+        // Add Payment
+        document.getElementById('addPaymentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const member_id = document.getElementById('paymentMemberId').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            const payment_date = document.getElementById('paymentDate').value;
+
+            const { error } = await supabaseClient.from('payments').insert([{ member_id, amount, payment_date }]);
+            if (error) alert('ত্রুটি: ' + error.message);
+            else {
+                alert('চাঁদা সফলভাবে জমা হয়েছে!');
+                document.getElementById('addPaymentForm').reset();
+                loadData();
+            }
+        });
+
+        // Add Expense
+        document.getElementById('addExpenseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const description = document.getElementById('expenseDesc'.value) || document.getElementById('expenseDesc').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const expense_date = document.getElementById('expenseDate').value;
+
+            const { error } = await supabaseClient.from('expenses').insert([{ description, amount, expense_date }]);
+            if (error) alert('ত্রুটি: ' + error.message);
+            else {
+                alert('খরচ সফলভাবে সংরক্ষিত হয়েছে!');
+                document.getElementById('addExpenseForm').reset();
+                loadData();
+            }
+        });
+
+        checkUser();
+    </script>
+</body>
+</html>
